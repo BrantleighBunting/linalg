@@ -1,0 +1,70 @@
+###############################################################################
+#  Project metadata (PEP 621)
+###############################################################################
+[project]
+name = "linalg"
+version = "0.1.0"
+description = "Educational linear-algebra toolkit used in a transformer-from-scratch project."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+
+authors = [
+  { name = "Brantleigh Bunting", email = "brantleigh.bunting@proton.me" },
+]
+
+dependencies = ["numpy>=1.24,<2"]
+
+classifiers = [
+  # ↑ this **must** live under [project] (PEP 621).  There is no Trove tag for BSL,
+  # so we use the generic “Other/Proprietary” bucket:
+  "License :: Other/Proprietary License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Intended Audience :: Education",
+  "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pytest-cov", "black", "isort", "mypy"]
+
+[project.urls]
+Repository = "https://github.com/your-handle/your-repo"
+
+###############################################################################
+#  Build back-end (PEP 517)
+###############################################################################
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+###############################################################################
+#  Setuptools configuration
+###############################################################################
+[tool.setuptools]
+package-dir = { "" = "." } # root-level packages live in the repo
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["tests*", "__pycache__*"] # tests aren’t shipped with the wheel
+
+###############################################################################
+#  Tool configs (pytest / black / isort / mypy)
+###############################################################################
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.black]
+line-length = 88
+target-version = ["py39"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["linalg"]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+packages = ["linalg"]
