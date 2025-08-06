@@ -5,20 +5,12 @@
 # Use of this software is governed by the Business Source License
 # included in the LICENSE file and at <https://mariadb.com/bsl11>
 
-import json
-import platform
 import time
 
 import numpy as np
 import pandas as pd
-from row_reduction import (
-    back_substitute,
-    forward_eliminate,
-    householder_qr,
-    least_squares_householder_qr,
-    least_squares_qr,
-    qr,
-)
+from linalg.qr import qr, householder_qr, least_squares_qr, least_squares_householder_qr
+from linalg.elimination import forward_eliminate, back_substitute
 
 np.random.seed(0)
 REPEATS = 5  # median of 5 runs leads to stable numbers
