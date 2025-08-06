@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # Copyright (C) 2025 Brantleigh Bunting
-# SPDX-License-Identifier: BSL-1.1
+# SPDX-License-Identifier: BUSL-1.1
 #
 # Use of this software is governed by the Business Source License
 # included in the LICENSE file and at <https://mariadb.com/bsl11>
