@@ -80,3 +80,44 @@ def svd(A: np.ndarray, tol: float = 1e-12):
 
     # Return U, the singular value vector, and V transpose.
     return U, s, V.T
+
+
+def pca(A: np.ndarray, k: int):
+    """
+    PCA with samples in rows and features in columns.
+
+    Returns:
+      pcs: (n_features, k) principal directions (columns of V)
+      scores: (n_samples, k) projections X @ pcs
+      explained_variance: (k,) variances per component
+      explained_variance_ratio: (k,) fraction of total variance per component
+      total_variance: scalar = ||X||_F^2 / (n_samples - 1)
+      mean_: (n_features,) feature means used to center
+    """
+    # 1) Center by feature (column) means
+    mean_ = A.mean(axis=0, keepdims=True)
+    X = A - mean_
+
+    # 2) Economy SVD: X = U Σ V^T  (U: n×r, S: r, Vt: r×d), r=min(n,d)
+    _, S, Vt = np.linalg.svd(X, full_matrices=False)
+
+    # 3) Principal directions are columns of V (rows of Vt)
+    pcs = Vt[:k].T
+
+    # 4) Scores: project centered data onto PCs
+    scores = X @ pcs
+
+    # 5) Variance bookkeeping
+    n_samples = A.shape[0]
+    explained_variance = (S[:k] ** 2) / (n_samples - 1)
+    total_variance = (np.linalg.norm(X, ord="fro") ** 2) / (n_samples - 1)
+    explained_variance_ratio = explained_variance / total_variance
+
+    return (
+        pcs,
+        scores,
+        explained_variance,
+        explained_variance_ratio,
+        total_variance,
+        mean_.ravel(),
+    )
