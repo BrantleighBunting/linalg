@@ -8,7 +8,7 @@ with a “Transformer-from-scratch” study project.
 
 * **Decompositions**
   * Modified-Gram–Schmidt and Householder **QR**
-  * Economy-size **SVD** via Strang’s \(A^{\mathsf T}A\) eigen-route
+  * Economy-size **SVD** via Strang's AᵀA eigen-route
 * **Matrix utilities**
   * Determinant (`det`), adjugate (`adj`)
   * Matrix Power  `matrix_power_eig`
