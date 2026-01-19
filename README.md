@@ -27,19 +27,39 @@ remain in sub-modules to keep the surface small.
 
 ---
 
-## Quick-start (with `uv`)
+## Quick-start
+
+### Option A: Using `uv` (recommended)
 
 ```bash
 # 1. Clone + enter the repo
 git clone https://github.com/BrantleighBunting/linalg.git
 cd linalg
 
-# 2. Create an isolated environment (Python ≥3.9)
-uv venv .venv           # creates ./venv and installs uv’s pip shim
-source .venv/bin/activate
+# 2. Create an isolated environment (Python >=3.10)
+uv venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # 3. Install runtime + dev dependencies
-uv pip install -e '.[dev]'  # <-- the quotes avoid zsh globbing
+uv pip install -e '.[dev]'  # quotes avoid zsh globbing
+
+# 4. Run the test-suite
+python -m pytest -q
+```
+
+### Option B: Using standard venv + pip
+
+```bash
+# 1. Clone + enter the repo
+git clone https://github.com/BrantleighBunting/linalg.git
+cd linalg
+
+# 2. Create virtual environment (Python >=3.10)
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -e '.[dev]'
 
 # 4. Run the test-suite
 python -m pytest -q

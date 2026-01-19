@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-import argparse, json, time, pathlib, numpy as np
-from typing import Dict, List
+import argparse, json, time, pathlib, sys, numpy as np
+from typing import Dict, List, Generator
 import os
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # disable tokenizer worker threads
@@ -515,7 +515,10 @@ def load_ckpt(ckpt_dir):
     return gpt, tok, head, PE, stoi, itos
 
 
-def sample(gpt, tok, head, PE, ctx_ids, steps=200, temperature=1.0, top_k=0):
+def sample(
+    gpt, tok, head, PE, ctx_ids, itos, steps=200, temperature=1.0, top_k=0
+) -> Generator[str, None, None]:
+    """Generate tokens one at a time, yielding each character as it's produced."""
     ids = ctx_ids.copy()
     for _ in range(steps):
         Tctx = len(ids)
@@ -540,7 +543,7 @@ def sample(gpt, tok, head, PE, ctx_ids, steps=200, temperature=1.0, top_k=0):
         p /= p.sum() + 1e-12
         nxt = int(np.random.choice(z.size, p=p))
         ids = np.append(ids, nxt)
-    return ids
+        yield itos[nxt]
 
 
 def repl(args):
@@ -557,17 +560,19 @@ def repl(args):
         # unseen chars → drop or map; here we drop
         s = "".join(ch for ch in s if ch in stoi)
         ctx = np.array([stoi[ch] for ch in s], dtype=np.int32)
-        out = sample(
+        for ch in sample(
             gpt,
             tok,
             head,
             PE,
             ctx,
+            itos,
             steps=args.gen_tokens,
             temperature=args.temperature,
             top_k=args.top_k,
-        )
-        print(decode(out[len(ctx) :], itos))
+        ):
+            print(ch, end="", flush=True)
+        print()  # newline after generation completes
 
 
 def main():
