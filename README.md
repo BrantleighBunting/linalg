@@ -86,6 +86,38 @@ from ai_comps import (
 )
 ```
 
+### Mathematical Derivations (`notebooks/`)
+
+Jupyter notebooks with complete mathematical derivations for each component, including
+forward/backward passes, proofs, and numerical verification.
+
+| Notebook | Topics |
+|----------|--------|
+| `01_activations.ipynb` | ReLU, GELU (tanh approximation), derivatives, vanishing gradients |
+| `02_normalization.ipynb` | LayerNorm, RMSNorm, backward pass derivations |
+| `03_attention.ipynb` | Softmax, scaled dot-product attention, multi-head attention |
+| `04_positional.ipynb` | Sinusoidal, learned embeddings, RoPE, relative positions |
+
+Each notebook includes:
+- **Glossary** of key terms
+- **Formula tables** for quick reference
+- **Prerequisites** explaining required math concepts
+- **Step-by-step derivations** with intuition
+- **Numerical verification** against implementations
+
+#### Running the notebooks
+
+```bash
+# From the project root, with virtual environment activated
+cd notebooks
+jupyter lab
+
+# Or run a specific notebook
+jupyter lab 01_activations.ipynb
+```
+
+The notebooks import from `ai_comps/`, so ensure the package is installed (`pip install -e .`).
+
 ---
 
 ## Quick-start
@@ -154,6 +186,11 @@ All public symbols are re-exported in `linalg/__init__.py`.
 │   ├── tokenizers.py       # Character-level tokenizer
 │   ├── cache.py            # KV cache for inference
 │   └── transformer.py      # Full transformer implementation
+├── notebooks/          # Mathematical derivation notebooks
+│   ├── 01_activations.ipynb
+│   ├── 02_normalization.ipynb
+│   ├── 03_attention.ipynb
+│   └── 04_positional.ipynb
 ├── linalg/             # Linear algebra primitives
 ├── gpt.py              # GPT training/inference script
 ├── checkpoints_np/     # Pre-trained model weights
