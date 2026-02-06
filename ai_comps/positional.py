@@ -1,13 +1,7 @@
 """
 Positional encoding schemes for transformers.
 
-Currently implemented:
-- Sinusoidal: Fixed positional encodings (Vaswani et al., 2017)
-- Learned: Trainable positional embeddings
-
-Planned for future implementation:
-- RoPE: Rotary Position Embeddings (Su et al., 2021)
-- ALiBi: Attention with Linear Biases
+Implements sinusoidal, learned, and RoPE positional encodings.
 """
 
 import numpy as np
@@ -96,21 +90,7 @@ class LearnedPositionalEmbedding:
 
 
 class RotaryPositionalEmbedding:
-    """
-    Rotary Position Embeddings (RoPE) - Su et al., 2021.
-
-    Instead of adding position information, RoPE rotates query and key vectors
-    based on their position. This allows the model to learn relative positions
-    naturally through the dot product.
-
-    The rotation is applied to pairs of dimensions:
-        [q_0, q_1] -> [q_0*cos(θ) - q_1*sin(θ), q_0*sin(θ) + q_1*cos(θ)]
-
-    Benefits:
-    - Encodes relative position in attention scores
-    - Enables length extrapolation
-    - No additional parameters
-    """
+    """RoPE: Rotates Q/K by position to encode relative positions in attention."""
 
     def __init__(self, d_head: int, max_len: int = 4096, base: float = 10000.0) -> None:
         """
@@ -141,18 +121,7 @@ class RotaryPositionalEmbedding:
     def forward(
         self, q: np.ndarray, k: np.ndarray, offset: int = 0
     ) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Apply rotary embeddings to query and key tensors.
-
-        Args:
-            q: Query tensor of shape (..., T, d_head).
-            k: Key tensor of shape (..., T, d_head).
-            offset: Position offset for KV-cache scenarios.
-
-        Returns:
-            q_rot: Rotated queries, same shape as q.
-            k_rot: Rotated keys, same shape as k.
-        """
+        """Apply rotation to Q and K. Returns (q_rot, k_rot)."""
         T = q.shape[-2]
         assert offset + T <= self.max_len, "Sequence too long for precomputed cache"
 
@@ -168,17 +137,7 @@ class RotaryPositionalEmbedding:
     def _apply_rotation(
         self, x: np.ndarray, cos: np.ndarray, sin: np.ndarray
     ) -> np.ndarray:
-        """
-        Apply rotation to tensor x using precomputed cos/sin.
-
-        Args:
-            x: Input tensor (..., T, d_head).
-            cos: Cosine values (T, d_head/2).
-            sin: Sine values (T, d_head/2).
-
-        Returns:
-            Rotated tensor, same shape as x.
-        """
+        """Apply 2D rotation to pairs of dimensions using precomputed cos/sin."""
         # Split x into even and odd indices
         x_even = x[..., 0::2]  # (..., T, d_head/2)
         x_odd = x[..., 1::2]  # (..., T, d_head/2)

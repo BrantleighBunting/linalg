@@ -1,12 +1,7 @@
 """
 Tokenizers for text encoding/decoding.
 
-Currently implemented:
-- CharTokenizer: Simple character-level tokenization
-
-Planned for future implementation:
-- BPETokenizer: Byte-Pair Encoding (GPT-2 style)
-- SentencePieceTokenizer: Unigram/BPE via SentencePiece
+Implements character-level tokenization with encode/decode methods.
 """
 
 import numpy as np
@@ -35,28 +30,10 @@ class BaseTokenizer(ABC):
 
 
 class CharTokenizer(BaseTokenizer):
-    """
-    Character-level tokenizer.
-
-    Simple tokenization where each unique character is a token.
-    Useful for educational purposes and small-scale experiments.
-
-    Attributes:
-        stoi: String-to-integer mapping (char -> id).
-        itos: Integer-to-string mapping (id -> char).
-    """
+    """Character-level tokenizer with stoi/itos mappings."""
 
     def __init__(self, text: Optional[str] = None, vocab: Optional[List[str]] = None):
-        """
-        Initialize tokenizer from text corpus or explicit vocabulary.
-
-        Args:
-            text: Text corpus to build vocabulary from.
-            vocab: Explicit list of characters (alternative to text).
-
-        Raises:
-            ValueError: If neither text nor vocab is provided.
-        """
+        """Build vocabulary from text corpus or explicit char list."""
         if vocab is not None:
             chars = vocab
         elif text is not None:
@@ -69,33 +46,14 @@ class CharTokenizer(BaseTokenizer):
 
     @classmethod
     def from_pretrained(cls, stoi: Dict[str, int], itos: Dict[int, str]) -> "CharTokenizer":
-        """
-        Create tokenizer from pre-existing mappings (e.g., loaded from checkpoint).
-
-        Args:
-            stoi: String-to-integer mapping.
-            itos: Integer-to-string mapping.
-
-        Returns:
-            CharTokenizer instance.
-        """
+        """Create tokenizer from existing stoi/itos mappings."""
         tokenizer = cls.__new__(cls)
         tokenizer.stoi = stoi
         tokenizer.itos = {int(k): v for k, v in itos.items()}  # ensure int keys
         return tokenizer
 
     def encode(self, text: str, drop_unknown: bool = True) -> np.ndarray:
-        """
-        Encode text to token IDs.
-
-        Args:
-            text: Input string.
-            drop_unknown: If True, skip characters not in vocabulary.
-                         If False, raises KeyError on unknown chars.
-
-        Returns:
-            Array of token IDs (int32).
-        """
+        """Encode text to token IDs. Returns int32 array."""
         if drop_unknown:
             ids = [self.stoi[ch] for ch in text if ch in self.stoi]
         else:
@@ -103,15 +61,7 @@ class CharTokenizer(BaseTokenizer):
         return np.array(ids, dtype=np.int32)
 
     def decode(self, ids: np.ndarray) -> str:
-        """
-        Decode token IDs back to text.
-
-        Args:
-            ids: Array or list of token IDs.
-
-        Returns:
-            Decoded string.
-        """
+        """Decode token IDs back to text."""
         return "".join(self.itos[int(i)] for i in ids)
 
     @property
@@ -124,12 +74,7 @@ class CharTokenizer(BaseTokenizer):
         return char in self.stoi
 
     def save(self) -> Dict:
-        """
-        Export tokenizer state for serialization.
-
-        Returns:
-            Dict with 'stoi' and 'itos' mappings.
-        """
+        """Export stoi/itos mappings for serialization."""
         return {
             "stoi": self.stoi,
             "itos": {str(k): v for k, v in self.itos.items()},  # JSON needs str keys
@@ -137,31 +82,13 @@ class CharTokenizer(BaseTokenizer):
 
     @classmethod
     def load(cls, data: Dict) -> "CharTokenizer":
-        """
-        Load tokenizer from serialized state.
-
-        Args:
-            data: Dict with 'stoi' and 'itos' keys.
-
-        Returns:
-            CharTokenizer instance.
-        """
+        """Load tokenizer from serialized state dict."""
         return cls.from_pretrained(data["stoi"], data["itos"])
 
 
 # Placeholder for future BPE implementation
 class BPETokenizer(BaseTokenizer):
-    """
-    Byte-Pair Encoding tokenizer.
-
-    TODO: Implement BPE algorithm:
-    1. Start with character vocabulary
-    2. Iteratively merge most frequent pairs
-    3. Build merge rules table
-    4. Apply merges during encoding
-
-    For now, consider using tiktoken or sentencepiece as external dependencies.
-    """
+    """Byte-Pair Encoding tokenizer (not yet implemented)."""
 
     def __init__(self):
         raise NotImplementedError(

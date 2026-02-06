@@ -1,13 +1,7 @@
 """
 Activation functions for neural networks.
 
-Currently implemented:
-- ReLU: Standard rectified linear unit
-
-Planned for future implementation:
-- GELU: Gaussian Error Linear Unit (GPT-2/3 style)
-- SwiGLU: Swish-Gated Linear Unit (LLaMA/PaLM style)
-- GeGLU: GELU-Gated Linear Unit
+Implements ReLU and GELU with forward and backward passes.
 """
 
 import numpy as np

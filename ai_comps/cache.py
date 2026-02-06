@@ -1,12 +1,7 @@
 """
-Caching mechanisms for efficient transformer inference.
+KV-cache for efficient autoregressive transformer inference.
 
-Currently implemented:
-- KVCache: Key-Value cache for autoregressive generation
-
-The KV cache stores previously computed key and value tensors, avoiding
-redundant computation during autoregressive generation. This provides
-O(1) computation per new token instead of O(n) where n is sequence length.
+Stores computed K/V tensors to avoid recomputation during generation.
 """
 
 import numpy as np
@@ -14,17 +9,7 @@ from typing import Optional, Tuple, List
 
 
 class KVCache:
-    """
-    Key-Value cache for a single attention layer.
-
-    During autoregressive generation, we only need to compute Q, K, V for the
-    new token, then concatenate K, V with cached values from previous tokens.
-
-    Attributes:
-        k_cache: Cached keys, shape (B, n_heads, seq_len, d_head).
-        v_cache: Cached values, shape (B, n_heads, seq_len, d_head).
-        seq_len: Current sequence length in cache.
-    """
+    """KV cache for a single attention layer. Shape: (B, h, T, d)."""
 
     def __init__(
         self,
@@ -34,16 +19,7 @@ class KVCache:
         d_head: int,
         dtype=np.float32,
     ) -> None:
-        """
-        Initialize empty KV cache.
-
-        Args:
-            batch_size: Batch size B.
-            n_heads: Number of attention heads.
-            max_seq_len: Maximum sequence length to cache.
-            d_head: Dimension per head.
-            dtype: Data type for cache arrays.
-        """
+        """Initialize empty cache with pre-allocated arrays."""
         self.batch_size = batch_size
         self.n_heads = n_heads
         self.max_seq_len = max_seq_len
@@ -62,20 +38,7 @@ class KVCache:
     def update(
         self, k_new: np.ndarray, v_new: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Append new K, V to cache and return full K, V for attention.
-
-        Args:
-            k_new: New keys (B, n_heads, new_tokens, d_head).
-            v_new: New values (B, n_heads, new_tokens, d_head).
-
-        Returns:
-            k_full: All keys up to current position (B, n_heads, seq_len, d_head).
-            v_full: All values up to current position (B, n_heads, seq_len, d_head).
-
-        Raises:
-            ValueError: If cache would exceed max_seq_len.
-        """
+        """Append new K/V and return full cached tensors."""
         new_tokens = k_new.shape[2]
         new_seq_len = self.seq_len + new_tokens
 
@@ -96,13 +59,7 @@ class KVCache:
         )
 
     def get(self) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Get current cached K, V without updating.
-
-        Returns:
-            k: Cached keys (B, n_heads, seq_len, d_head).
-            v: Cached values (B, n_heads, seq_len, d_head).
-        """
+        """Get current cached K/V without updating."""
         return (
             self.k_cache[:, :, :self.seq_len, :],
             self.v_cache[:, :, :self.seq_len, :],
@@ -122,11 +79,7 @@ class KVCache:
 
 
 class LayerKVCache:
-    """
-    KV cache manager for all layers in a transformer.
-
-    Manages a list of KVCache objects, one per layer.
-    """
+    """KV cache manager for all transformer layers."""
 
     def __init__(
         self,
@@ -137,17 +90,7 @@ class LayerKVCache:
         d_head: int,
         dtype=np.float32,
     ) -> None:
-        """
-        Initialize KV caches for all layers.
-
-        Args:
-            n_layers: Number of transformer layers.
-            batch_size: Batch size B.
-            n_heads: Number of attention heads per layer.
-            max_seq_len: Maximum sequence length.
-            d_head: Dimension per head.
-            dtype: Data type for cache arrays.
-        """
+        """Initialize KV caches for all layers."""
         self.n_layers = n_layers
         self.caches: List[KVCache] = [
             KVCache(batch_size, n_heads, max_seq_len, d_head, dtype)
@@ -174,18 +117,7 @@ def apply_kv_cache(
     v: np.ndarray,
     cache: Optional[KVCache],
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Helper to apply KV cache if provided.
-
-    Args:
-        k: New keys (B, h, T_new, d).
-        v: New values (B, h, T_new, d).
-        cache: Optional KVCache to update and use.
-
-    Returns:
-        k_full: Keys for attention (B, h, T_full, d).
-        v_full: Values for attention (B, h, T_full, d).
-    """
+    """Update cache with new K/V and return full tensors, or pass through if no cache."""
     if cache is None:
         return k, v
     return cache.update(k, v)

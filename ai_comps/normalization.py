@@ -1,11 +1,7 @@
 """
 Normalization layers for neural networks.
 
-Currently implemented:
-- LayerNorm: Standard layer normalization with learnable scale/shift
-
-Planned for future implementation:
-- RMSNorm: Root Mean Square normalization (faster, no mean centering)
+Implements LayerNorm and RMSNorm with learnable parameters.
 """
 
 import numpy as np
@@ -13,19 +9,7 @@ from typing import Dict, Tuple
 
 
 class LayerNorm:
-    """
-    Layer Normalization over the last axis with learnable scale/shift.
-
-    Normalizes per-token features to zero mean and unit variance:
-        mu = mean(x, axis=-1, keepdims=True)
-        sigma = sqrt(var(x) + eps)
-        xhat = (x - mu) / sigma
-        y = gamma * xhat + beta
-
-    Attributes:
-        gamma: Learnable scale, shape (D,).
-        beta:  Learnable shift, shape (D,).
-    """
+    """Layer Normalization: y = gamma * (x - mean) / std + beta."""
 
     def __init__(self, d_model: int = 512) -> None:
         """
@@ -105,18 +89,7 @@ class LayerNorm:
 
 
 class RMSNorm:
-    """
-    Root Mean Square Layer Normalization.
-
-    Simpler and faster than LayerNorm - no mean centering:
-        rms = sqrt(mean(x^2) + eps)
-        y = (x / rms) * gamma
-
-    Used in LLaMA, Gemma, and other modern architectures.
-
-    Attributes:
-        gamma: Learnable scale, shape (D,).
-    """
+    """RMS Normalization: y = gamma * x / rms(x). No mean centering."""
 
     def __init__(self, d_model: int = 512, eps: float = 1e-6) -> None:
         """

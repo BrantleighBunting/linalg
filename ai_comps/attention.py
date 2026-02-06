@@ -1,14 +1,8 @@
 """
 Attention mechanisms for transformers.
 
-Currently implemented:
-- ScaledDotProductAttention: Core attention computation
-- MultiHeadAttention: Standard multi-head attention
-
-Planned for future implementation:
-- GroupedQueryAttention (GQA): Shared KV heads for efficiency
-- MultiQueryAttention (MQA): Single KV head
-- FlashAttention-style: Memory-efficient attention (algorithmic)
+Implements scaled dot-product attention and multi-head attention
+with full forward/backward passes.
 """
 
 import numpy as np
@@ -49,16 +43,7 @@ def causal_mask(seq_len: int, fill: float = -1e9, dtype=np.float32) -> np.ndarra
 
 
 class ScaledDotProductAttention:
-    """
-    Scaled dot-product attention.
-
-    Computes:
-        S = (Q @ K.T) / sqrt(d)
-        P = softmax(S + mask)
-        O = P @ V
-
-    This is the core attention computation used by all attention variants.
-    """
+    """Scaled dot-product attention: O = softmax(QK^T / sqrt(d)) @ V."""
 
     def forward(
         self,
@@ -67,19 +52,7 @@ class ScaledDotProductAttention:
         V: np.ndarray,
         mask: Optional[np.ndarray] = None,
     ) -> Tuple[np.ndarray, Tuple]:
-        """
-        Forward pass.
-
-        Args:
-            Q: Queries (BH, T_q, d).
-            K: Keys (BH, T_kv, d).
-            V: Values (BH, T_kv, d).
-            mask: Optional additive mask (BH, T_q, T_kv).
-
-        Returns:
-            O: Output (BH, T_q, d).
-            cache: Tuple for backward pass.
-        """
+        """Forward pass. Returns (O, cache). Shape: (BH, T, d)."""
         BH, T, d = Q.shape
         scale = 1.0 / np.sqrt(d)
 
@@ -93,16 +66,7 @@ class ScaledDotProductAttention:
         return O, cache
 
     def backward(self, dO: np.ndarray, cache: Tuple) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Backward pass.
-
-        Args:
-            dO: Upstream gradient (BH, T_q, d).
-            cache: Tuple from forward pass.
-
-        Returns:
-            dQ, dK, dV: Gradients with same shapes as Q, K, V.
-        """
+        """Backward pass. Returns (dQ, dK, dV)."""
         Q, K, V, P, d = cache
         scale = 1.0 / np.sqrt(d)
 
@@ -132,18 +96,7 @@ def he_init(fan_in: int, fan_out: int, rng: np.random.Generator) -> np.ndarray:
 
 
 class MultiHeadAttention:
-    """
-    Multi-Head Attention (self- or cross-attention).
-
-    Standard MHA with separate Q, K, V projections per head.
-    If KV is None -> self-attention (Q, K, V from X).
-    If KV provided -> cross-attention (Q from X, K/V from KV).
-
-    Attributes:
-        Wq, Wk, Wv, Wo: Projection matrices.
-        h: Number of heads.
-        d: Dimension per head (D // h).
-    """
+    """Multi-Head Attention. KV=None for self-attention, else cross-attention."""
 
     def __init__(self, d_model: int, n_heads: int, seed: int = 0) -> None:
         """
@@ -193,17 +146,7 @@ class MultiHeadAttention:
         mask: Optional[np.ndarray] = None,
         KV: Optional[np.ndarray] = None,
     ) -> np.ndarray:
-        """
-        Forward pass.
-
-        Args:
-            X: Query source (B, T, D).
-            mask: Optional attention mask, broadcastable to (B, h, T, T').
-            KV: Optional KV source for cross-attention (B, T', D).
-
-        Returns:
-            Y: Output (B, T, D).
-        """
+        """Forward pass. Shape: (B, T, D) -> (B, T, D)."""
         B, T, D = X.shape
         h, d = self.h, self.d
         X_kv = X if KV is None else KV
@@ -247,16 +190,7 @@ class MultiHeadAttention:
         return Y
 
     def backward(self, dY: np.ndarray) -> Tuple[np.ndarray, Optional[np.ndarray]]:
-        """
-        Backward pass.
-
-        Args:
-            dY: Upstream gradient (B, T, D).
-
-        Returns:
-            dX: Gradient wrt X (B, T, D).
-            dKV: Gradient wrt KV if cross-attention, else None.
-        """
+        """Backward pass. Returns (dX, dKV) where dKV is None for self-attention."""
         X, X_kv, Q, K, V, H, attn_cache = self._cache
         B, T, D = X.shape
         h, d = self.h, self.d
